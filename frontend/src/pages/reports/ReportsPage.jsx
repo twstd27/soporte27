@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Wrench, Package, CheckCircle2, DollarSign, TrendingUp, TrendingDown, Printer } from 'lucide-react'
+import { Wrench, Package, CheckCircle2, DollarSign, TrendingUp, TrendingDown, Printer, BarChart3 } from 'lucide-react'
+
 import { getSummary, getByStatus, getBySupportType, getCosts, getFinancial } from '@/api/reports.api'
 import { formatCurrency } from '@/utils/formatters'
 import { TICKET_STATUSES } from '@/utils/constants'
@@ -11,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Empty } from '@/components/ui/empty'
 import { Link } from 'react-router-dom'
 import {
   ResponsiveContainer,
@@ -322,7 +324,7 @@ function FinancialTab() {
                   <TableRow key={i}>{[1,2,3,4,5,6,7].map((j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
                 ))
               ) : tickets.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="py-10 text-center text-muted-foreground">Sin tickets entregados en el período</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="py-4"><Empty icon={BarChart3} title="Sin tickets en el período" description="0 registros · No hay tickets entregados en el rango seleccionado" /></TableCell></TableRow>
               ) : (
                 tickets.map((t) => (
                   <TableRow key={t.id}>

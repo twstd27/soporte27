@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Plus, Search, Pencil } from 'lucide-react'
+import { Plus, Search, Pencil, Users } from 'lucide-react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -119,7 +119,7 @@ export default function CustomersPage() {
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="py-12">
-                  <Empty title="Sin clientes" description="No se encontraron clientes" />
+                  <Empty icon={Users} title="Sin clientes registrados" description="0 registros · Agrega el primer cliente" />
                 </TableCell>
               </TableRow>
             ) : (

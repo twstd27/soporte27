@@ -16,6 +16,8 @@
 /public/build
 /public/hot
 /public/storage
+/public/ticket-photos
+/public/company
 /storage/*.key
 /storage/pail
 /vendor

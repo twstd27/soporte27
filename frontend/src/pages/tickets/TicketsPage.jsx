@@ -6,7 +6,8 @@ import {
   getCoreRowModel,
   flexRender,
 } from '@tanstack/react-table'
-import { Search, Plus, ChevronLeft, ChevronRight, MoreHorizontal, Printer, Trash2, RotateCcw, Eye, EyeOff, ChevronRight as ChevronRightSm } from 'lucide-react'
+import { Search, Plus, ChevronLeft, ChevronRight, MoreHorizontal, Printer, Trash2, RotateCcw, Eye, EyeOff, ChevronRight as ChevronRightSm, ScanLine, Wrench } from 'lucide-react'
+import { Html5Qrcode } from 'html5-qrcode'
 import { getTickets, deleteTicket, updateTicketStatus, restoreTicket } from '@/api/tickets.api'
 import { formatCurrency, formatDate } from '@/utils/formatters'
 import { TICKET_STATUSES } from '@/utils/constants'
@@ -206,6 +207,58 @@ function TicketActions({ ticket }) {
   )
 }
 
+const QR_SCANNER_ID = 'qr-scanner-reader'
+
+function QrScannerDialog({ open, onScan, onClose }) {
+  useEffect(() => {
+    if (!open) return
+
+    let scanner = null
+
+    const start = async () => {
+      try {
+        scanner = new Html5Qrcode(QR_SCANNER_ID)
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 220, height: 220 } },
+          (text) => {
+            onScan(text.trim())
+          },
+          () => {},
+        )
+      } catch {
+        // camera permission denied or unavailable
+      }
+    }
+
+    const t = setTimeout(start, 150)
+
+    return () => {
+      clearTimeout(t)
+      if (scanner) {
+        scanner.stop().catch(() => {}).finally(() => { try { scanner.clear() } catch {} })
+      }
+    }
+  }, [open, onScan])
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose() }}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Escanear código QR</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-muted-foreground">
+          Apunta la cámara al código QR del ticket impreso para buscarlo automáticamente.
+        </p>
+        <div id={QR_SCANNER_ID} className="w-full overflow-hidden rounded-md" />
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancelar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 const PAGE_SIZE = 15
 
 const columns = [
@@ -290,6 +343,12 @@ export default function TicketsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [page, setPage] = useState(1)
   const [showTrashed, setShowTrashed] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
+
+  const handleQrScan = useCallback((text) => {
+    setScannerOpen(false)
+    setSearch(text)
+  }, [])
 
   const restoreMutation = useMutation({
     mutationFn: (id) => restoreTicket(id),
@@ -368,6 +427,9 @@ export default function TicketsPage() {
             className="pl-9"
           />
         </div>
+        <Button variant="outline" size="icon" title="Escanear QR" onClick={() => setScannerOpen(true)}>
+          <ScanLine className="size-4" />
+        </Button>
         <Select value={statusFilter} onValueChange={handleStatusChange}>
           <SelectTrigger className="w-48">
             <SelectValue placeholder="Estado" />
@@ -410,7 +472,7 @@ export default function TicketsPage() {
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="py-12">
-                  <Empty title="Sin tickets" description="No se encontraron tickets con los filtros aplicados" />
+                  <Empty icon={Wrench} title="Sin tickets" description="0 registros · No hay tickets con los filtros aplicados" />
                 </TableCell>
               </TableRow>
             ) : (
@@ -463,6 +525,12 @@ export default function TicketsPage() {
           </Button>
         </div>
       </div>
+
+      <QrScannerDialog
+        open={scannerOpen}
+        onScan={handleQrScan}
+        onClose={() => setScannerOpen(false)}
+      />
     </div>
   )
 }

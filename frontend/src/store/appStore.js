@@ -3,8 +3,8 @@ import { getSettings, getCompany } from '@/api/settings.api'
 
 export const useAppStore = create((set, get) => ({
   // formatting
-  currency: 'COP',
-  currencySymbol: '$',
+  currency: 'BOB',
+  currencySymbol: 'Bs.',
   priceDecimals: 0,
   quantityDecimals: 2,
   // company
@@ -25,8 +25,8 @@ export const useAppStore = create((set, get) => ({
       )
 
       set({
-        currency:         flat.currency         ?? 'COP',
-        currencySymbol:   flat.currency_symbol  ?? '$',
+        currency:         flat.currency         ?? 'BOB',
+        currencySymbol:   flat.currency_symbol  ?? 'Bs.',
         priceDecimals:    parseInt(flat.price_decimals    || '0') || 0,
         quantityDecimals: parseInt(flat.quantity_decimals || '2') || 2,
         company:          companyRes.data.data  ?? null,

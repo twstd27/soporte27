@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, RotateCcw, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, RotateCcw, Eye, EyeOff, Tag } from 'lucide-react'
 import { getCategories, createCategory, updateCategory, deleteCategory, restoreCategory } from '@/api/categories.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -83,6 +83,7 @@ function CategoryDialog({ open, onClose, category }) {
             <FieldLabel>Nombre *</FieldLabel>
             <Input
               placeholder="Nombre de la categoría"
+              maxLength={100}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -93,6 +94,7 @@ function CategoryDialog({ open, onClose, category }) {
             <Textarea
               rows={3}
               placeholder="Descripción opcional..."
+              maxLength={500}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
@@ -176,7 +178,7 @@ export default function CategoriesPage() {
             ) : categories.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={3} className="py-12">
-                  <Empty title="Sin categorías" description="Crea la primera categoría de soporte" />
+                  <Empty icon={Tag} title="Sin categorías registradas" description="0 registros · Crea la primera categoría" />
                 </TableCell>
               </TableRow>
             ) : (

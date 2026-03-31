@@ -258,8 +258,9 @@ function AdminDashboard() {
           {recentTickets.length === 0 ? (
             <div className="p-6">
               <Empty
+                icon={Wrench}
                 title="Sin tickets recientes"
-                description="No hay tickets registrados aún"
+                description="0 registros · No hay tickets registrados aún"
               />
             </div>
           ) : (
@@ -596,8 +597,9 @@ function TechnicianDashboard({ user }) {
           {activeTickets.length === 0 ? (
             <div className="p-6">
               <Empty
+                icon={Wrench}
                 title="Sin tickets activos"
-                description="No tienes tickets activos actualmente"
+                description="0 registros · No tienes tickets activos actualmente"
               />
             </div>
           ) : (

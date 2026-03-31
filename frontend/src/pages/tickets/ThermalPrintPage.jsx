@@ -1,17 +1,10 @@
-import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { QRCodeSVG } from 'qrcode.react'
 import { getTicket } from '@/api/tickets.api'
 import { useAppStore } from '@/store/appStore'
-import { formatCurrency, formatDate } from '@/utils/formatters'
+import { formatDate } from '@/utils/formatters'
 import { TICKET_STATUSES } from '@/utils/constants'
-
-const FIELD_LABELS = {
-  diagnosis: 'Diagnóstico',
-  work_performed: 'Trabajo realizado',
-  labor_cost: 'Mano de obra',
-  technician_id: 'Técnico',
-}
 
 export default function ThermalPrintPage() {
   const { id } = useParams()
@@ -21,13 +14,6 @@ export default function ThermalPrintPage() {
     queryKey: ['ticket', id],
     queryFn: () => getTicket(id).then((r) => r.data.data ?? r.data),
   })
-
-  useEffect(() => {
-    if (ticket) {
-      const t = setTimeout(() => window.print(), 600)
-      return () => clearTimeout(t)
-    }
-  }, [ticket?.id])
 
   if (isLoading) {
     return (
@@ -45,9 +31,6 @@ export default function ThermalPrintPage() {
     )
   }
 
-  const parts = ticket.spare_parts ?? []
-  const partsTotal = parts.reduce((sum, p) => sum + parseFloat(p.subtotal ?? 0), 0)
-
   const Sep = () => (
     <div style={{ borderTop: '1px dashed #000', margin: '5px 0' }} />
   )
@@ -55,7 +38,7 @@ export default function ThermalPrintPage() {
   const Row = ({ label, value }) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: '4px' }}>
       <span>{label}:</span>
-      <span style={{ textAlign: 'right', maxWidth: '50%', wordBreak: 'break-word' }}>{value}</span>
+      <span style={{ textAlign: 'right', maxWidth: '55%', wordBreak: 'break-word' }}>{value}</span>
     </div>
   )
 
@@ -94,12 +77,12 @@ export default function ThermalPrintPage() {
 
         <Sep />
 
-        {/* Ticket ID */}
+        {/* Ticket number */}
         <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '15px', letterSpacing: '1px' }}>
           {ticket.ticket_number}
         </div>
         <Row label="Estado" value={TICKET_STATUSES[ticket.status]?.label ?? ticket.status} />
-        <Row label="Fecha recepción" value={formatDate(ticket.reception_date)} />
+        <Row label="Recepción" value={formatDate(ticket.reception_date)} />
         {ticket.estimated_return_date && (
           <Row label="Entrega est." value={formatDate(ticket.estimated_return_date)} />
         )}
@@ -110,7 +93,7 @@ export default function ThermalPrintPage() {
         <div style={{ fontWeight: 'bold' }}>CLIENTE</div>
         <div>{ticket.customer?.name ?? '—'}</div>
         {ticket.customer?.phone && <div>Tel: {ticket.customer.phone}</div>}
-        {ticket.customer?.document_number && <div>CI: {ticket.customer.document_number}</div>}
+        {ticket.customer?.document_number && <div>CI/Doc: {ticket.customer.document_number}</div>}
 
         <Sep />
 
@@ -119,7 +102,9 @@ export default function ThermalPrintPage() {
         {ticket.brand?.name && <Row label="Marca" value={ticket.brand.name} />}
         <Row label="Modelo" value={ticket.model} />
         {ticket.serial_number && <Row label="N° Serie" value={ticket.serial_number} />}
-        {ticket.description && <div style={{ fontSize: '10px', marginTop: '2px' }}>{ticket.description}</div>}
+        {ticket.description && (
+          <div style={{ fontSize: '10px', marginTop: '2px' }}>{ticket.description}</div>
+        )}
 
         <Sep />
 
@@ -135,41 +120,29 @@ export default function ThermalPrintPage() {
         {ticket.category?.name && <Row label="Categoría" value={ticket.category.name} />}
         {ticket.technician?.name && <Row label="Técnico" value={ticket.technician.name} />}
 
-        {/* Spare parts */}
-        {parts.length > 0 && (
-          <>
-            <Sep />
-            <div style={{ fontWeight: 'bold' }}>REPUESTOS</div>
-            {parts.map((p) => (
-              <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ maxWidth: '55%', wordBreak: 'break-word' }}>{p.name} x{p.quantity}</span>
-                <span>{formatCurrency(p.subtotal)}</span>
-              </div>
-            ))}
-          </>
-        )}
-
-        <Sep />
-
-        {/* Costs */}
-        <div style={{ fontWeight: 'bold' }}>COSTOS</div>
-        <Row label="Mano de obra" value={formatCurrency(ticket.labor_cost)} />
-        <Row label="Repuestos" value={formatCurrency(partsTotal)} />
+        {/* Advance payment */}
         {ticket.advance_payment > 0 && (
-          <Row label="Adelanto" value={`- ${formatCurrency(ticket.advance_payment)}`} />
-        )}
-        <Sep />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px' }}>
-          <span>TOTAL</span>
-          <span>{formatCurrency(ticket.total_cost)}</span>
-        </div>
-
-        {ticket.warranty_days && (
           <>
             <Sep />
-            <Row label="Garantía" value={`${ticket.warranty_days} días`} />
+            <div style={{ fontWeight: 'bold' }}>ADELANTO RECIBIDO</div>
+            <div style={{ fontSize: '13px', fontWeight: 'bold', textAlign: 'right' }}>
+              {Number(ticket.advance_payment).toLocaleString('es', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
           </>
         )}
+
+        <Sep />
+
+        {/* QR Code */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', padding: '4px 0' }}>
+          <QRCodeSVG
+            value={ticket.ticket_number}
+            size={80}
+            level="M"
+            style={{ display: 'block' }}
+          />
+          <div style={{ fontSize: '8px', letterSpacing: '0.5px' }}>{ticket.ticket_number}</div>
+        </div>
 
         <Sep />
 
@@ -181,7 +154,7 @@ export default function ThermalPrintPage() {
         </div>
 
         {/* Print button – hidden when printing */}
-        <div className="no-print" style={{ textAlign: 'center', marginTop: '16px' }}>
+        <div className="no-print" style={{ textAlign: 'center', marginTop: '16px', display: 'flex', justifyContent: 'center', gap: '8px' }}>
           <button
             onClick={() => window.print()}
             style={{
@@ -202,7 +175,6 @@ export default function ThermalPrintPage() {
               border: '1px solid #ccc',
               borderRadius: '4px',
               fontFamily: 'sans-serif',
-              marginLeft: '8px',
             }}
           >
             Cerrar

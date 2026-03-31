@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, RotateCcw, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, RotateCcw, Eye, EyeOff, Truck } from 'lucide-react'
 import { getSuppliers, deleteSupplier, restoreSupplier } from '@/api/suppliers.api'
 import { SupplierDialog } from '@/components/suppliers/SupplierDialog'
 import { Button } from '@/components/ui/button'
@@ -72,7 +72,7 @@ export default function SuppliersPage() {
                 <TableRow key={i}>{[1,2,3,4,5].map((j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
               ))
             ) : suppliers.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="py-12"><Empty title="Sin proveedores" description="Crea el primer proveedor" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="py-12"><Empty icon={Truck} title="Sin proveedores registrados" description="0 registros · Crea el primer proveedor" /></TableCell></TableRow>
             ) : (
               suppliers.map((s) => {
                 const isDeleted = !!s.deleted_at

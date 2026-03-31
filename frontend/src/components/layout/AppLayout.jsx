@@ -29,6 +29,10 @@ export default function AppLayout() {
         <main className="flex flex-1 flex-col gap-4 p-4 lg:p-6">
           <Outlet />
         </main>
+        <footer className="px-4 lg:px-6 py-3 border-t flex items-center justify-between text-xs text-muted-foreground">
+          <span>v{__APP_VERSION__}</span>
+          <span>Desarrollado por <a href="https://wa.me/59167349376" target="_blank" rel="noopener noreferrer" className="font-medium text-foreground hover:underline">Rx</a></span>
+        </footer>
       </SidebarInset>
     </SidebarProvider>
   )

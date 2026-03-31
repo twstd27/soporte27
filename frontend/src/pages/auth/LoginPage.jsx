@@ -38,7 +38,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-muted/40 p-4">
+    <div className="flex min-h-svh flex-col items-center justify-center bg-muted/40 p-4 gap-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-2">
@@ -79,6 +79,9 @@ export default function LoginPage() {
           </form>
         </CardContent>
       </Card>
+      <p className="text-xs text-muted-foreground">
+        v{__APP_VERSION__} · Desarrollado por <a href="https://wa.me/59167349376" target="_blank" rel="noopener noreferrer" className="font-medium text-foreground hover:underline">Rx</a>
+      </p>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, RotateCcw, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, RotateCcw, Eye, EyeOff, Layers } from 'lucide-react'
 import { getSupportTypes, createSupportType, updateSupportType, deleteSupportType, restoreSupportType } from '@/api/support_types.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -59,12 +59,12 @@ function SupportTypeDialog({ open, onClose, supportType }) {
         <div className="flex flex-col gap-4">
           <Field>
             <FieldLabel>Nombre *</FieldLabel>
-            <Input placeholder="Ej. Reparación, Mantenimiento..." value={name} onChange={(e) => setName(e.target.value)} />
+            <Input placeholder="Ej. Reparación, Mantenimiento..." maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
             {nameError && <FieldError>{nameError}</FieldError>}
           </Field>
           <Field>
             <FieldLabel>Descripción</FieldLabel>
-            <Textarea rows={2} placeholder="Descripción opcional..." value={description} onChange={(e) => setDescription(e.target.value)} />
+            <Textarea rows={2} placeholder="Descripción opcional..." maxLength={255} value={description} onChange={(e) => setDescription(e.target.value)} />
           </Field>
         </div>
         <DialogFooter>
@@ -136,7 +136,7 @@ export default function SupportTypesPage() {
                 <TableRow key={i}>{[1,2,3].map((j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
               ))
             ) : types.length === 0 ? (
-              <TableRow><TableCell colSpan={3} className="py-12"><Empty title="Sin tipos" description="Crea el primer tipo de soporte" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={3} className="py-12"><Empty icon={Layers} title="Sin tipos de soporte" description="0 registros · Crea el primer tipo" /></TableCell></TableRow>
             ) : (
               types.map((t) => {
                 const isDeleted = !!t.deleted_at

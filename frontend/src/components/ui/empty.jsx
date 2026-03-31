@@ -4,17 +4,40 @@ import { cn } from "@/lib/utils"
 
 function Empty({
   className,
+  icon: Icon,
+  title,
+  description,
+  children,
   ...props
 }) {
+  const hasShorthand = Icon || title || description
+
   return (
     <div
       data-slot="empty"
       className={cn(
-        "flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-4 rounded-xl border-dashed p-6 text-center text-balance",
+        "flex w-full min-w-0 flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-8 text-center",
         className
       )}
-      {...props} />
-  );
+      {...props}
+    >
+      {hasShorthand ? (
+        <>
+          {Icon && (
+            <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+              <Icon className="size-5 text-muted-foreground" />
+            </div>
+          )}
+          {title && (
+            <p className="text-sm font-medium tracking-tight">{title}</p>
+          )}
+          {description && (
+            <p className="text-xs text-muted-foreground">{description}</p>
+          )}
+        </>
+      ) : children}
+    </div>
+  )
 }
 
 function EmptyHeader({

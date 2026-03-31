@@ -36,7 +36,7 @@ const ToastAction = React.forwardRef(({ className, ...props }, ref) => (
 ToastAction.displayName = ToastPrimitive.Action.displayName
 
 const ToastClose = React.forwardRef(({ className, ...props }, ref) => (
-  <ToastPrimitive.Close ref={ref} className={cn("absolute right-2 top-2 rounded-md p-1 opacity-0 transition-opacity hover:opacity-100 focus:opacity-100 group-hover:opacity-100", className)} {...props}>
+  <ToastPrimitive.Close ref={ref} className={cn("absolute right-2 top-2 rounded-md p-1 opacity-60 sm:opacity-0 transition-opacity hover:opacity-100 focus:opacity-100 sm:group-hover:opacity-100", className)} {...props}>
     <X className="h-4 w-4" />
   </ToastPrimitive.Close>
 ))

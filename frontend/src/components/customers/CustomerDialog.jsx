@@ -17,11 +17,11 @@ import {
 } from '@/components/ui/dialog'
 
 const schema = z.object({
-  name: z.string().min(1, 'El nombre es requerido'),
-  company: z.string().optional(),
-  phone: z.string().min(1, 'El teléfono es requerido'),
-  email: z.string().email('Correo inválido').optional().or(z.literal('')),
-  document_number: z.string().optional(),
+  name: z.string().min(1, 'El nombre es requerido').max(255, 'Máximo 255 caracteres'),
+  company: z.string().max(255, 'Máximo 255 caracteres').optional(),
+  phone: z.string().min(1, 'El teléfono es requerido').max(12, 'Máximo 12 caracteres'),
+  email: z.string().email('Correo inválido').max(255).optional().or(z.literal('')),
+  document_number: z.string().max(50, 'Máximo 50 caracteres').optional(),
 })
 
 /**
@@ -71,23 +71,23 @@ export function CustomerDialog({ open, onClose, customer, onSuccess }) {
         </DialogHeader>
 
         <form
-          onSubmit={handleSubmit((d) => mutation.mutate(d))}
+          onSubmit={(e) => { e.stopPropagation(); handleSubmit((d) => mutation.mutate(d))(e) }}
           className="flex flex-col gap-4"
         >
           <Field>
             <FieldLabel>Nombre *</FieldLabel>
-            <Input placeholder="Nombre completo" {...register('name')} />
+            <Input placeholder="Nombre completo" maxLength={255} {...register('name')} />
             {errors.name && <FieldError>{errors.name.message}</FieldError>}
           </Field>
 
           <Field>
             <FieldLabel>Empresa</FieldLabel>
-            <Input placeholder="Empresa (opcional)" {...register('company')} />
+            <Input placeholder="Empresa (opcional)" maxLength={255} {...register('company')} />
           </Field>
 
           <Field>
             <FieldLabel>Teléfono *</FieldLabel>
-            <Input placeholder="+57 300 000 0000" {...register('phone')} />
+            <Input placeholder="Número de teléfono" maxLength={12} {...register('phone')} />
             {errors.phone && <FieldError>{errors.phone.message}</FieldError>}
           </Field>
 
@@ -96,6 +96,7 @@ export function CustomerDialog({ open, onClose, customer, onSuccess }) {
             <Input
               type="email"
               placeholder="correo@ejemplo.com"
+              maxLength={255}
               {...register('email')}
             />
             {errors.email && <FieldError>{errors.email.message}</FieldError>}
@@ -105,6 +106,7 @@ export function CustomerDialog({ open, onClose, customer, onSuccess }) {
             <FieldLabel>Documento</FieldLabel>
             <Input
               placeholder="Número de documento"
+              maxLength={50}
               {...register('document_number')}
             />
           </Field>

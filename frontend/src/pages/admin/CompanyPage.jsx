@@ -152,35 +152,37 @@ export default function CompanyPage() {
               <FieldLabel>Nombre de la empresa *</FieldLabel>
               <Input
                 placeholder="Nombre..."
+                maxLength={255}
                 value={form.name}
                 onChange={set("name")}
               />
             </Field>
             <Field>
               <FieldLabel>NIT</FieldLabel>
-              <Input value={form.tax_id} onChange={set("tax_id")} />
+              <Input maxLength={50} value={form.tax_id} onChange={set("tax_id")} />
             </Field>
             <Field>
               <FieldLabel>Teléfono</FieldLabel>
-              <Input value={form.phone} onChange={set("phone")} />
+              <Input maxLength={12} value={form.phone} onChange={set("phone")} />
             </Field>
             <Field>
               <FieldLabel>Correo electrónico</FieldLabel>
-              <Input type="email" value={form.email} onChange={set("email")} />
+              <Input type="email" maxLength={255} value={form.email} onChange={set("email")} />
             </Field>
             <Field>
               <FieldLabel>Sitio web</FieldLabel>
-              <Input value={form.website} onChange={set("website")} />
+              <Input maxLength={255} value={form.website} onChange={set("website")} />
             </Field>
             <Field className="sm:col-span-2">
               <FieldLabel>Dirección</FieldLabel>
-              <Input value={form.address} onChange={set("address")} />
+              <Input maxLength={255} value={form.address} onChange={set("address")} />
             </Field>
             <Field className="sm:col-span-2">
               <FieldLabel>Descripción</FieldLabel>
               <Textarea
                 rows={3}
                 placeholder="Descripción del centro de soporte..."
+                maxLength={500}
                 value={form.description}
                 onChange={set("description")}
               />

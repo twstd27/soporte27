@@ -62,21 +62,21 @@ export function SupplierDialog({ open, onClose, supplier, onSuccess }) {
         <div className="flex flex-col gap-4">
           <Field>
             <FieldLabel>Nombre *</FieldLabel>
-            <Input placeholder="Nombre del proveedor" value={form.name} onChange={set('name')} />
+            <Input placeholder="Nombre del proveedor" maxLength={255} value={form.name} onChange={set('name')} />
             {nameError && <FieldError>{nameError}</FieldError>}
           </Field>
           <Field>
             <FieldLabel>Contacto</FieldLabel>
-            <Input placeholder="Nombre del contacto" value={form.contact_name} onChange={set('contact_name')} />
+            <Input placeholder="Nombre del contacto" maxLength={255} value={form.contact_name} onChange={set('contact_name')} />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field>
               <FieldLabel>Teléfono</FieldLabel>
-              <Input placeholder="+591 7..." value={form.phone} onChange={set('phone')} />
+              <Input placeholder="Teléfono" maxLength={12} value={form.phone} onChange={set('phone')} />
             </Field>
             <Field>
               <FieldLabel>Correo</FieldLabel>
-              <Input type="email" placeholder="correo@proveedor.com" value={form.email} onChange={set('email')} />
+              <Input type="email" placeholder="correo@proveedor.com" maxLength={255} value={form.email} onChange={set('email')} />
             </Field>
           </div>
         </div>

@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
 import { Field, FieldLabel, FieldError } from '@/components/ui/field'
+import { Empty } from '@/components/ui/empty'
 import {
   Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext,
 } from '@/components/ui/carousel'
@@ -54,6 +55,43 @@ const STATUS_TRANSITIONS = {
 
 const today = new Date().toISOString().split('T')[0]
 
+async function compressImage(file, maxMB = 2) {
+  const maxBytes = maxMB * 1024 * 1024;
+  if (file.size <= maxBytes) return file;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      const MAX_DIM = 1920;
+      if (width > MAX_DIM || height > MAX_DIM) {
+        const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      let quality = 0.85;
+      const attempt = () => {
+        canvas.toBlob((blob) => {
+          if (!blob) { resolve(file); return; }
+          if (blob.size <= maxBytes || quality <= 0.1) {
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+          } else {
+            quality = Math.max(0.1, quality - 0.15);
+            attempt();
+          }
+        }, 'image/jpeg', quality);
+      };
+      attempt();
+    };
+    img.src = url;
+  });
+}
+
 function StatusBadge({ status }) {
   const info = TICKET_STATUSES[status]
   if (!info) return <Badge variant="secondary">{status}</Badge>
@@ -79,10 +117,10 @@ export default function TicketDetailPage() {
   const [uploadingPhoto, setUploadingPhoto]         = useState(false)
   const [supplierDialogOpen, setSupplierDialogOpen] = useState(false)
 
-  const { data: ticket, isLoading } = useQuery({
+  const { data: ticket, isLoading, error } = useQuery({
     queryKey: ['ticket', id],
     queryFn: () => getTicket(id).then((r) => r.data.data ?? r.data),
-    // change_logs and status_logs are included in the detail resource
+    retry: (count, err) => err?.response?.status !== 403 && count < 3,
   })
 
   const { data: suppliersData } = useQuery({
@@ -156,6 +194,16 @@ export default function TicketDetailPage() {
     )
   }
 
+  if (error?.response?.status === 403) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+        <Wrench className="size-10 text-muted-foreground/40" />
+        <p className="font-medium">No tienes acceso a este ticket</p>
+        <p className="text-sm text-muted-foreground">Solo puedes ver los tickets que tienes asignados.</p>
+      </div>
+    )
+  }
+
   if (!ticket) return <div className="text-muted-foreground">Ticket no encontrado</div>
 
   const canEdit            = user?.role === 'admin' || (ticket.status !== 'delivered' && ticket.technician_id === user?.id)
@@ -208,8 +256,9 @@ export default function TicketDetailPage() {
     if (photos.length >= 3) { toast.error('Máximo 3 fotos'); return }
     setUploadingPhoto(true)
     try {
+      const compressed = await compressImage(file)
       const fd = new FormData()
-      fd.append('photo', file)
+      fd.append('photo', compressed)
       await uploadPhoto(id, fd)
       toast.success('Foto agregada')
       invalidate()
@@ -398,7 +447,7 @@ export default function TicketDetailPage() {
                                 alt="Foto equipo"
                                 className="w-full h-full object-cover"
                               />
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <div className="absolute inset-0 bg-black/40 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                 <Button size="icon" variant="secondary" className="size-8" onClick={() => setViewPhoto(photo.url)}>
                                   <Eye className="size-4" />
                                 </Button>
@@ -534,7 +583,7 @@ export default function TicketDetailPage() {
             </CardHeader>
             <CardContent className="p-0">
               {parts.length === 0 ? (
-                <p className="text-sm text-muted-foreground px-4 pb-4">Sin repuestos registrados</p>
+                <div className="px-4 pb-4"><Empty icon={Package} title="Sin repuestos" description="0 registros · No se han agregado repuestos a este ticket" /></div>
               ) : (
                 <Table>
                   <TableHeader>
@@ -596,6 +645,9 @@ export default function TicketDetailPage() {
                     <Input
                       type="number"
                       className="w-28 h-7 text-right text-sm"
+                      min="0"
+                      max="99999999.99"
+                      step="0.01"
                       value={laborCost}
                       onChange={(e) => setLaborCost(e.target.value)}
                       placeholder="0"
@@ -619,7 +671,7 @@ export default function TicketDetailPage() {
                 <span className="text-sm text-muted-foreground flex items-center gap-1.5 group-hover:text-foreground transition-colors">
                   <Package className="size-3.5" />
                   Repuestos
-                  <ChevronRight className="size-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ChevronRight className="size-3 opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
                 </span>
                 <span className="font-medium">{formatCurrency(partsTotal)}</span>
               </button>
@@ -651,7 +703,7 @@ export default function TicketDetailPage() {
             </CardHeader>
             <CardContent className="pt-0">
               {activityFeed.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin actividad registrada</p>
+                <Empty icon={History} title="Sin actividad registrada" description="0 registros · Los cambios del ticket aparecerán aquí" />
               ) : (
                 <div className="flex flex-col gap-3">
                   {activityFeed.map((entry, i) => (
@@ -771,7 +823,7 @@ export default function TicketDetailPage() {
           <div className="flex flex-col gap-4">
             <Field>
               <FieldLabel>Nombre *</FieldLabel>
-              <Input placeholder="Nombre del repuesto" value={partForm.name}
+              <Input placeholder="Nombre del repuesto" maxLength={255} value={partForm.name}
                 onChange={(e) => setPartForm((p) => ({ ...p, name: e.target.value }))} />
             </Field>
             <Field>
@@ -797,12 +849,12 @@ export default function TicketDetailPage() {
             <div className="grid grid-cols-2 gap-3">
               <Field>
                 <FieldLabel>Precio unitario *</FieldLabel>
-                <Input type="number" min="0" placeholder="0" value={partForm.unit_price}
+                <Input type="number" min="0" max="99999999.99" step="0.01" placeholder="0" value={partForm.unit_price}
                   onChange={(e) => setPartForm((p) => ({ ...p, unit_price: e.target.value }))} />
               </Field>
               <Field>
                 <FieldLabel>Cantidad</FieldLabel>
-                <Input type="number" min="1" value={partForm.quantity}
+                <Input type="number" min="1" max="999999" value={partForm.quantity}
                   onChange={(e) => setPartForm((p) => ({ ...p, quantity: e.target.value }))} />
               </Field>
             </div>
@@ -828,17 +880,14 @@ export default function TicketDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Photo viewer — 80vw wide, image 70vh tall */}
+      {/* Photo viewer */}
       <Dialog open={!!viewPhoto} onOpenChange={() => setViewPhoto(null)}>
-        <DialogContent className="w-[80vw] max-w-[80vw]">
-          <DialogHeader>
-            <DialogTitle>Foto del equipo</DialogTitle>
-          </DialogHeader>
+        <DialogContent className="w-fit sm:w-fit sm:max-w-[80vw] max-w-[80vw] p-0 overflow-hidden">
           {viewPhoto && (
             <img
               src={viewPhoto}
               alt="Foto completa"
-              className="w-full h-[70vh] object-contain rounded-md"
+              style={{ maxWidth: '80vw', maxHeight: '80vh', width: 'auto', height: 'auto', display: 'block' }}
             />
           )}
         </DialogContent>

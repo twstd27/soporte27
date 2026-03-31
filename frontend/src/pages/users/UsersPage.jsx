@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { Plus, Pencil, Power, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Power, Eye, EyeOff, UserCog } from 'lucide-react'
 import {
   useReactTable,
   getCoreRowModel,
@@ -135,7 +135,7 @@ function UserDialog({ open, onClose, user }) {
           </Field>
           <Field>
             <FieldLabel>Teléfono</FieldLabel>
-            <Input placeholder="+57 300 000 0000" {...register('phone')} />
+            <Input placeholder="Teléfono" {...register('phone')} />
           </Field>
           <Field>
             <FieldLabel>{isEdit ? 'Nueva contraseña (opcional)' : 'Contraseña *'}</FieldLabel>
@@ -281,7 +281,7 @@ export default function UsersPage() {
             ) : table.getRowModel().rows.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={columns.length} className="py-12">
-                  <Empty title="Sin usuarios" description="No hay usuarios registrados" />
+                  <Empty icon={UserCog} title="Sin usuarios registrados" description="0 registros · Crea el primer usuario" />
                 </TableCell>
               </TableRow>
             ) : (

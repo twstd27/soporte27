@@ -52,12 +52,49 @@ import {
 
 const today = new Date().toISOString().split("T")[0];
 
+async function compressImage(file, maxMB = 2) {
+  const maxBytes = maxMB * 1024 * 1024;
+  if (file.size <= maxBytes) return file;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      const MAX_DIM = 1920;
+      if (width > MAX_DIM || height > MAX_DIM) {
+        const ratio = Math.min(MAX_DIM / width, MAX_DIM / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      let quality = 0.85;
+      const attempt = () => {
+        canvas.toBlob((blob) => {
+          if (!blob) { resolve(file); return; }
+          if (blob.size <= maxBytes || quality <= 0.1) {
+            resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' }));
+          } else {
+            quality = Math.max(0.1, quality - 0.15);
+            attempt();
+          }
+        }, 'image/jpeg', quality);
+      };
+      attempt();
+    };
+    img.src = url;
+  });
+}
+
 const step1Schema = z.object({
   brand_id: z.preprocess((v) => v ?? '', z.string().min(1, 'Seleccione una marca')),
-  model: z.string().min(1, "Ingrese el modelo del equipo"),
-  serial_number: z.string().optional(),
-  description: z.string().min(1, "Ingrese la descripción del equipo"),
-  problem_description: z.string().min(1, "Describa el problema del equipo"),
+  model: z.string().min(1, "Ingrese el modelo del equipo").max(255, 'Máximo 255 caracteres'),
+  serial_number: z.string().max(100, 'Máximo 100 caracteres').optional(),
+  description: z.string().min(1, "Ingrese la descripción del equipo").max(255, 'Máximo 255 caracteres'),
+  problem_description: z.string().min(1, "Describa el problema del equipo").max(2000, 'Máximo 2000 caracteres'),
 });
 
 const step2Schema = z.object({
@@ -66,9 +103,9 @@ const step2Schema = z.object({
   reception_date: z.string({ required_error: 'Seleccione la fecha de recepción' }).min(1, 'Seleccione la fecha de recepción'),
   estimated_return_date: z.string().optional(),
   technician_id: z.string().optional(),
-  warranty_days: z.string().optional(),
-  advance_payment: z.string().optional(),
-  internal_notes: z.string().optional(),
+  warranty_days: z.preprocess((v) => v === '' ? undefined : v, z.coerce.number().int().min(0).max(3650, 'Máximo 3650 días').optional()),
+  advance_payment: z.preprocess((v) => v === '' ? undefined : v, z.coerce.number().min(0).max(99999999.99, 'Máximo 8 dígitos antes del decimal').optional()),
+  internal_notes: z.string().max(2000, 'Máximo 2000 caracteres').optional(),
 });
 
 function StepIndicator({ currentStep }) {
@@ -140,6 +177,7 @@ function CustomerSearch({ onSelect, selected }) {
   const handleNewCustomerCreated = (customer) => {
     onSelect({ type: "existing", customer });
     setSearchTerm(customer.name);
+    setShowResults(false);
     setNewCustomerOpen(false);
   };
 
@@ -268,7 +306,7 @@ export default function NewTicketPage() {
       const brand = res.data.data ?? res.data;
       toast.success("Marca creada");
       qc.invalidateQueries({ queryKey: ["brands"] });
-      form1.setValue("brand_id", brand.id);
+      form1.setValue("brand_id", String(brand.id), { shouldValidate: true });
       setBrandDialogOpen(false);
       setNewBrandName("");
       setNewBrandError("");
@@ -403,12 +441,14 @@ export default function NewTicketPage() {
       const ticket = res.data.data ?? res.data;
 
       for (const photo of photos) {
+        const compressed = await compressImage(photo);
         const fd = new FormData();
-        fd.append("photo", photo);
+        fd.append("photo", compressed);
         await uploadPhoto(ticket.id, fd);
       }
 
       toast.success("Ticket creado correctamente");
+      window.open(`/tickets/${ticket.id}/print`, '_blank');
       navigate(`/tickets/${ticket.id}`);
     } catch (err) {
       toast.error(err?.response?.data?.message ?? "Error al crear el ticket");
@@ -450,6 +490,7 @@ export default function NewTicketPage() {
                 <FieldLabel>Descripción del equipo *</FieldLabel>
                 <Input
                   placeholder="Ej. Color negro, con cable rojo..."
+                  maxLength={255}
                   aria-invalid={!!form1.formState.errors.description}
                   {...form1.register("description")}
                 />
@@ -492,11 +533,17 @@ export default function NewTicketPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        {brandList.map((b) => (
-                          <SelectItem key={b.id} value={String(b.id)}>
-                            {b.name}
-                          </SelectItem>
-                        ))}
+                        {brandList.length === 0 ? (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">
+                            Sin marcas — usa el + para crear una
+                          </div>
+                        ) : (
+                          brandList.map((b) => (
+                            <SelectItem key={b.id} value={String(b.id)}>
+                              {b.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -510,6 +557,7 @@ export default function NewTicketPage() {
                   <FieldLabel>Modelo *</FieldLabel>
                   <Input
                     placeholder="Ej. GSB 120"
+                    maxLength={255}
                     aria-invalid={!!form1.formState.errors.model}
                     {...form1.register("model")}
                   />
@@ -525,6 +573,7 @@ export default function NewTicketPage() {
                 <FieldLabel>Número de serie</FieldLabel>
                 <Input
                   placeholder="Número de serie (opcional)"
+                  maxLength={100}
                   {...form1.register("serial_number")}
                 />
               </Field>
@@ -662,8 +711,13 @@ export default function NewTicketPage() {
                 <Input
                   type="number"
                   placeholder="Ej. 30 (opcional)"
+                  min={0}
+                  max={3650}
                   {...form2.register("warranty_days")}
                 />
+                {form2.formState.errors.warranty_days && (
+                  <FieldError>{form2.formState.errors.warranty_days.message}</FieldError>
+                )}
               </Field>
 
               <Field>
@@ -672,8 +726,13 @@ export default function NewTicketPage() {
                   type="number"
                   step="0.01"
                   placeholder="Monto adelantado (opcional)"
+                  min={0}
+                  max={99999999.99}
                   {...form2.register("advance_payment")}
                 />
+                {form2.formState.errors.advance_payment && (
+                  <FieldError>{form2.formState.errors.advance_payment.message}</FieldError>
+                )}
               </Field>
 
               <Field>
@@ -796,33 +855,39 @@ export default function NewTicketPage() {
           <DialogHeader>
             <DialogTitle>Nueva Marca</DialogTitle>
           </DialogHeader>
-          <Field>
-            <FieldLabel>Nombre *</FieldLabel>
-            <Input
-              placeholder="Ej. Bosch, Dewalt..."
-              value={newBrandName}
-              onChange={(e) => setNewBrandName(e.target.value)}
-            />
-            {newBrandError && <FieldError>{newBrandError}</FieldError>}
-          </Field>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setBrandDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => {
-                if (!newBrandName.trim()) {
-                  setNewBrandError("El nombre es requerido");
-                  return;
-                }
-                setNewBrandError("");
-                brandCreateMutation.mutate({ name: newBrandName.trim() });
-              }}
-              disabled={brandCreateMutation.isPending}
-            >
-              {brandCreateMutation.isPending ? "Creando..." : "Crear marca"}
-            </Button>
-          </DialogFooter>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!newBrandName.trim()) {
+                setNewBrandError("El nombre es requerido");
+                return;
+              }
+              setNewBrandError("");
+              brandCreateMutation.mutate({ name: newBrandName.trim() });
+            }}
+            className="flex flex-col gap-4"
+          >
+            <Field>
+              <FieldLabel>Nombre *</FieldLabel>
+              <Input
+                placeholder="Ej. Bosch, Dewalt..."
+                maxLength={100}
+                value={newBrandName}
+                onChange={(e) => setNewBrandName(e.target.value)}
+                autoFocus
+              />
+              {newBrandError && <FieldError>{newBrandError}</FieldError>}
+            </Field>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setBrandDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={brandCreateMutation.isPending}>
+                {brandCreateMutation.isPending ? "Creando..." : "Crear marca"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

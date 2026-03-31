@@ -12,7 +12,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Field, FieldLabel } from '@/components/ui/field'
-import { X } from 'lucide-react'
+import { Empty } from '@/components/ui/empty'
+import { X, ScrollText } from 'lucide-react'
 
 const ACTION_LABELS = {
   ticket_created:        { label: 'Ticket creado',          variant: 'default' },
@@ -145,7 +146,9 @@ export default function ActivityLogPage() {
               ))
             ) : logs.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-12 text-center text-muted-foreground">Sin eventos registrados</TableCell>
+                <TableCell colSpan={5} className="py-4">
+                  <Empty icon={ScrollText} title="Sin eventos registrados" description="0 registros · No hay actividad en el período seleccionado" />
+                </TableCell>
               </TableRow>
             ) : (
               logs.map((log) => {

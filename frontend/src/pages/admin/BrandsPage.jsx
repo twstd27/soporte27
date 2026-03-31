@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, RotateCcw, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, RotateCcw, Eye, EyeOff, Bookmark } from 'lucide-react'
 import { getBrands, createBrand, updateBrand, deleteBrand, restoreBrand } from '@/api/brands.api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -55,7 +55,7 @@ function BrandDialog({ open, onClose, brand }) {
         </DialogHeader>
         <Field>
           <FieldLabel>Nombre *</FieldLabel>
-          <Input placeholder="Ej. Bosch, Dewalt..." value={name} onChange={(e) => setName(e.target.value)} />
+          <Input placeholder="Ej. Bosch, Dewalt..." maxLength={100} value={name} onChange={(e) => setName(e.target.value)} />
           {nameError && <FieldError>{nameError}</FieldError>}
         </Field>
         <DialogFooter>
@@ -126,7 +126,7 @@ export default function BrandsPage() {
                 <TableRow key={i}>{[1,2].map((j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}</TableRow>
               ))
             ) : brands.length === 0 ? (
-              <TableRow><TableCell colSpan={2} className="py-12"><Empty title="Sin marcas" description="Crea la primera marca" /></TableCell></TableRow>
+              <TableRow><TableCell colSpan={2} className="py-12"><Empty icon={Bookmark} title="Sin marcas registradas" description="0 registros · Crea la primera marca" /></TableCell></TableRow>
             ) : (
               brands.map((b) => {
                 const isDeleted = !!b.deleted_at

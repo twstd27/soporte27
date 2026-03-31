@@ -28,6 +28,10 @@ class SupportTicketController extends Controller
             $query->withTrashed();
         }
 
+        if (!$request->user()->isAdmin()) {
+            $query->where('technician_id', $request->user()->id);
+        }
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -99,8 +103,12 @@ class SupportTicketController extends Controller
         ], 201);
     }
 
-    public function show(SupportTicket $ticket): JsonResponse
+    public function show(Request $request, SupportTicket $ticket): JsonResponse
     {
+        if (!$request->user()->isAdmin() && $ticket->technician_id !== $request->user()->id) {
+            return response()->json(['message' => 'No autorizado.'], 403);
+        }
+
         $ticket->load(['customer', 'technician', 'category', 'brand', 'supportType', 'photos', 'spareParts.supplier', 'statusLogs.changedBy', 'creator', 'changeLogs.user']);
 
         return response()->json([
@@ -111,6 +119,10 @@ class SupportTicketController extends Controller
 
     public function update(UpdateTicketRequest $request, SupportTicket $ticket): JsonResponse
     {
+        if (!$request->user()->isAdmin() && $ticket->technician_id !== $request->user()->id) {
+            return response()->json(['message' => 'No autorizado.'], 403);
+        }
+
         $data = $request->validated();
         $oldStatus = $ticket->status;
 
@@ -170,6 +182,10 @@ class SupportTicketController extends Controller
 
     public function duplicate(Request $request, SupportTicket $ticket): JsonResponse
     {
+        if (!$request->user()->isAdmin()) {
+            return response()->json(['message' => 'No autorizado.'], 403);
+        }
+
         $newTicket = $ticket->replicate([
             'ticket_number', 'status', 'diagnosis', 'work_performed',
             'actual_return_date', 'labor_cost', 'total_cost', 'reception_date',
@@ -200,8 +216,12 @@ class SupportTicketController extends Controller
         ], 201);
     }
 
-    public function destroy(SupportTicket $ticket): JsonResponse
+    public function destroy(Request $request, SupportTicket $ticket): JsonResponse
     {
+        if (!$request->user()->isAdmin()) {
+            return response()->json(['message' => 'No autorizado.'], 403);
+        }
+
         ActivityLogger::log('ticket_deleted', "Ticket {$ticket->ticket_number} eliminado", 'ticket', $ticket->id, $ticket->ticket_number);
         $ticket->delete();
         return response()->json(['data' => null, 'message' => 'Ticket eliminado correctamente.']);
@@ -217,6 +237,10 @@ class SupportTicketController extends Controller
 
     public function updateStatus(Request $request, SupportTicket $ticket): JsonResponse
     {
+        if (!$request->user()->isAdmin() && $ticket->technician_id !== $request->user()->id) {
+            return response()->json(['message' => 'No autorizado.'], 403);
+        }
+
         $request->validate([
             'status' => ['required', 'string', 'in:received,diagnosing,in_repair,waiting_parts,ready,delivered'],
             'notes' => ['nullable', 'string'],

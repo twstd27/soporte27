@@ -15,6 +15,10 @@ class ToolPhotoController extends Controller
 {
     public function store(Request $request, SupportTicket $ticket): JsonResponse
     {
+        if (!$request->user()->isAdmin() && $ticket->technician_id !== $request->user()->id) {
+            return response()->json(['message' => 'No autorizado.'], 403);
+        }
+
         $request->validate([
             'photo' => ['required', 'image', 'mimes:jpeg,jpg,png,gif,webp', 'max:5120'],
         ]);
@@ -50,8 +54,12 @@ class ToolPhotoController extends Controller
         ], 201);
     }
 
-    public function destroy(SupportTicket $ticket, ToolPhoto $photo): JsonResponse
+    public function destroy(Request $request, SupportTicket $ticket, ToolPhoto $photo): JsonResponse
     {
+        if (!$request->user()->isAdmin() && $ticket->technician_id !== $request->user()->id) {
+            return response()->json(['message' => 'No autorizado.'], 403);
+        }
+
         if ($photo->ticket_id !== $ticket->id) {
             return response()->json([
                 'message' => 'Photo does not belong to this ticket.',
