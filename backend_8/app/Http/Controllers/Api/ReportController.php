@@ -46,7 +46,7 @@ class ReportController extends Controller
             ->selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->get()
-            ->map(fn($i) => ['status' => $i->status, 'count' => (int) $i->count]);
+            ->map(function($i) { return ['status' => $i->status, 'count' => (int) $i->count]; });
 
         return response()->json([
             'data' => [
@@ -97,16 +97,18 @@ class ReportController extends Controller
             ->latest()
             ->limit(5)
             ->get()
-            ->map(fn($t) => [
-                'id'             => $t->id,
-                'ticket_number'  => $t->ticket_number,
-                'brand'          => $t->brand ? ['id' => $t->brand->id, 'name' => $t->brand->name] : null,
-                'model'          => $t->model,
-                'status'         => $t->status,
-                'customer'       => $t->customer ? ['name' => $t->customer->name] : null,
-                'technician'     => $t->technician ? ['name' => $t->technician->name] : null,
-                'reception_date' => $t->reception_date?->toDateString(),
-            ]);
+            ->map(function($t) {
+                return [
+                    'id'             => $t->id,
+                    'ticket_number'  => $t->ticket_number,
+                    'brand'          => $t->brand ? ['id' => $t->brand->id, 'name' => $t->brand->name] : null,
+                    'model'          => $t->model,
+                    'status'         => $t->status,
+                    'customer'       => $t->customer ? ['name' => $t->customer->name] : null,
+                    'technician'     => $t->technician ? ['name' => $t->technician->name] : null,
+                    'reception_date' => optional($t->reception_date)->toDateString(),
+                ];
+            });
 
         return response()->json([
             'data' => [
@@ -129,10 +131,12 @@ class ReportController extends Controller
         $data = SupportTicket::selectRaw('status, COUNT(*) as count')
             ->groupBy('status')
             ->get()
-            ->map(fn ($item) => [
-                'status' => $item->status,
-                'count' => (int) $item->count,
-            ]);
+            ->map(function($item) {
+                return [
+                    'status' => $item->status,
+                    'count' => (int) $item->count,
+                ];
+            });
 
         return response()->json([
             'data' => $data,
@@ -146,10 +150,12 @@ class ReportController extends Controller
             ->with('supportType')
             ->groupBy('support_type_id')
             ->get()
-            ->map(fn ($item) => [
-                'name' => $item->supportType?->name ?? 'Sin tipo',
-                'count' => (int) $item->count,
-            ]);
+            ->map(function($item) {
+                return [
+                    'name' => optional($item->supportType)->name ?? 'Sin tipo',
+                    'count' => (int) $item->count,
+                ];
+            });
 
         return response()->json([
             'data' => $data,
@@ -159,7 +165,7 @@ class ReportController extends Controller
 
     public function costs(): JsonResponse
     {
-        $months = collect(range(5, 0))->map(function ($monthsAgo) {
+        $months = collect(range(5, 0))->map(function($monthsAgo) {
             $date = now()->subMonths($monthsAgo);
             return [
                 'year' => $date->year,
@@ -215,16 +221,18 @@ class ReportController extends Controller
             ->with(['customer', 'technician', 'spareParts'])
             ->latest('actual_return_date')
             ->get()
-            ->map(fn($t) => [
-                'id'             => $t->id,
-                'ticket_number'  => $t->ticket_number,
-                'customer'       => $t->customer?->name,
-                'technician'     => $t->technician?->name,
-                'delivery_date'  => $t->actual_return_date?->toDateString(),
-                'labor_cost'     => (float) $t->labor_cost,
-                'parts_cost'     => (float) $t->spareParts->sum('subtotal'),
-                'total_cost'     => (float) $t->total_cost,
-            ]);
+            ->map(function($t) {
+                return [
+                    'id'             => $t->id,
+                    'ticket_number'  => $t->ticket_number,
+                    'customer'       => optional($t->customer)->name,
+                    'technician'     => optional($t->technician)->name,
+                    'delivery_date'  => optional($t->actual_return_date)->toDateString(),
+                    'labor_cost'     => (float) $t->labor_cost,
+                    'parts_cost'     => (float) $t->spareParts->sum('subtotal'),
+                    'total_cost'     => (float) $t->total_cost,
+                ];
+            });
 
         return response()->json([
             'data' => [
@@ -270,7 +278,7 @@ class ReportController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('ticket_number', 'like', "%{$search}%")
-                    ->orWhereHas('customer', fn ($cq) => $cq->where('name', 'like', "%{$search}%"));
+                    ->orWhereHas('customer', function($cq) use ($search) { $cq->where('name', 'like', "%{$search}%"); });
             });
         }
 

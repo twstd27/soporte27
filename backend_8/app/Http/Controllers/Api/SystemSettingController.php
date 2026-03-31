@@ -12,14 +12,16 @@ class SystemSettingController extends Controller
     public function index(): JsonResponse
     {
         $settings = SystemSetting::all()->groupBy('group')->map(function ($group) {
-            return $group->map(fn ($s) => [
-                'id'    => $s->id,
-                'key'   => $s->key,
-                'value' => $s->value,
-                'type'  => $s->type,
-                'label' => $s->label,
-                'group' => $s->group,
-            ])->values();
+            return $group->map(function($s) {
+                return [
+                    'id'    => $s->id,
+                    'key'   => $s->key,
+                    'value' => $s->value,
+                    'type'  => $s->type,
+                    'label' => $s->label,
+                    'group' => $s->group,
+                ];
+            })->values();
         });
 
         return response()->json(['data' => $settings]);

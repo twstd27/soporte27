@@ -16,7 +16,7 @@ class TicketStatusLogResource extends JsonResource
             'old_status' => $this->old_status,
             'new_status' => $this->new_status,
             'notes' => $this->notes,
-            'created_at' => $this->created_at?->toISOString(),
+            'created_at' => optional($this->created_at)->toISOString(),
         ];
     }
 }

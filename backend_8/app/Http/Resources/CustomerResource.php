@@ -18,8 +18,8 @@ class CustomerResource extends JsonResource
             'document_number' => $this->document_number,
             'tickets_count' => $this->when(isset($this->tickets_count), $this->tickets_count),
             'recent_tickets' => SupportTicketResource::collection($this->whenLoaded('tickets')),
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'created_at' => optional($this->created_at)->toISOString(),
+            'updated_at' => optional($this->updated_at)->toISOString(),
         ];
     }
 }

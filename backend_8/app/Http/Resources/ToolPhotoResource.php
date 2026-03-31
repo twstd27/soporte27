@@ -15,7 +15,7 @@ class ToolPhotoResource extends JsonResource
             'url' => url($this->file_path),
             'original_name' => $this->original_name,
             'sort_order' => $this->sort_order,
-            'created_at' => $this->created_at?->toISOString(),
+            'created_at' => optional($this->created_at)->toISOString(),
         ];
     }
 }

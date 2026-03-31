@@ -15,13 +15,15 @@ class NotificationController extends Controller
             ->latest()
             ->limit(30)
             ->get()
-            ->map(fn($n) => [
-                'id'         => $n->id,
-                'type'       => $n->data['type'] ?? null,
-                'data'       => $n->data,
-                'read_at'    => $n->read_at?->toIso8601String(),
-                'created_at' => $n->created_at->toIso8601String(),
-            ]);
+            ->map(function($n) {
+                return [
+                    'id'         => $n->id,
+                    'type'       => $n->data['type'] ?? null,
+                    'data'       => $n->data,
+                    'read_at'    => optional($n->read_at)->toIso8601String(),
+                    'created_at' => $n->created_at->toIso8601String(),
+                ];
+            });
 
         return response()->json([
             'data'         => $notifications,

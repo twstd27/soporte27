@@ -7,21 +7,26 @@ use Illuminate\Notifications\Notification;
 
 class TicketAssigned extends Notification
 {
-    public function __construct(private SupportTicket $ticket) {}
+    private $ticket;
 
-    public function via(object $notifiable): array
+    public function __construct(SupportTicket $ticket)
+    {
+        $this->ticket = $ticket;
+    }
+
+    public function via($notifiable)
     {
         return ['database'];
     }
 
-    public function toDatabase(object $notifiable): array
+    public function toDatabase($notifiable)
     {
         return [
             'type'          => 'ticket_assigned',
             'ticket_id'     => $this->ticket->id,
             'ticket_number' => $this->ticket->ticket_number,
             'model'         => $this->ticket->model,
-            'customer_name' => $this->ticket->customer?->name,
+            'customer_name' => optional($this->ticket->customer)->name,
             'message'       => "Se te asignó el ticket {$this->ticket->ticket_number}",
         ];
     }

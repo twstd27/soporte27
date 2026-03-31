@@ -15,7 +15,7 @@ class TicketChangeLogResource extends JsonResource
             'old_value' => $this->old_value,
             'new_value' => $this->new_value,
             'user'      => new UserResource($this->whenLoaded('user')),
-            'created_at' => $this->created_at?->toISOString(),
+            'created_at' => optional($this->created_at)->toISOString(),
         ];
     }
 }

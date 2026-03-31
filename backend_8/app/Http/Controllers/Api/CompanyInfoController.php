@@ -74,7 +74,7 @@ class CompanyInfoController extends Controller
             'website'     => $company->website,
             'description' => $company->description,
             'logo_url'    => $company->logo_path ? url($company->logo_path) : null,
-            'updated_at'  => $company->updated_at?->toISOString(),
+            'updated_at'  => optional($company->updated_at)->toISOString(),
         ];
     }
 }
